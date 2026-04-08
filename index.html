@@ -15,73 +15,63 @@
         body { 
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; 
             display: flex; flex-direction: column; align-items: center; 
-            padding: 20px; background-color: var(--bg-color); color: var(--text-color);
+            padding: 15px; background-color: var(--bg-color); color: var(--text-color);
             margin: 0;
         }
-        .container { width: 100%; max-width: 400px; }
+        .container { width: 100%; max-width: 420px; }
         
-        h1 { font-size: 1.3rem; text-align: center; color: var(--primary-color); margin: 20px 0; letter-spacing: 2px; }
+        h1 { font-size: 1.4rem; text-align: center; color: var(--primary-color); margin: 15px 0; letter-spacing: 2px; }
 
         .card {
-            background: var(--card-bg); padding: 25px; border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 20px;
+            background: var(--card-bg); padding: 20px; border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 15px;
         }
 
-        .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-        label { font-size: 0.85rem; font-weight: bold; color: var(--primary-color); margin-left: 5px; }
+        .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+        label { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); margin-left: 5px; }
         
         input { 
-            width: 100%; padding: 14px; font-size: 16px; 
+            width: 100%; padding: 16px; font-size: 18px; /* 入力文字も大きく */
             border: 2px solid #f0f0f0; border-radius: 14px; box-sizing: border-box;
-            background: #fafafa; outline: none; transition: all 0.3s;
+            background: #fafafa; outline: none;
         }
-        input:focus { border-color: var(--primary-color); background: #fff; }
 
         button { 
-            width: 100%; padding: 18px; font-size: 18px; font-weight: bold; 
+            width: 100%; padding: 20px; font-size: 20px; font-weight: bold; 
             background-color: var(--primary-color); color: white; 
             border: none; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 4px 0 #6aa7ac; transition: all 0.2s;
-            margin-top: 10px;
+            box-shadow: 0 5px 0 #6aa7ac; transition: all 0.2s;
+            margin-top: 5px;
         }
         button:active { transform: translateY(2px); box-shadow: 0 2px 0 #6aa7ac; }
 
         #status { 
-            color: var(--accent-color); text-align: center; font-size: 0.9rem; 
-            font-weight: bold; margin: 15px 0 5px; min-height: 1.2em; 
+            color: var(--accent-color); text-align: center; font-size: 1rem; 
+            font-weight: bold; margin: 12px 0; min-height: 1.2em; 
         }
 
-        /* レポート表示エリアの改良 */
+        /* レポート表示エリア：文字を大きく、視認性アップ */
         .report-area {
             background: #fff;
             padding: 20px;
             border-radius: 16px;
-            border: 2px solid #eee;
+            border: 3px solid var(--primary-color); /* 枠を少し太く */
             position: relative;
-            overflow: hidden;
-        }
-        .report-area::before {
-            content: "PREVIEW";
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            font-size: 0.6rem;
-            color: #ddd;
-            font-weight: bold;
         }
 
         pre { 
             margin: 0;
-            padding: 5px 0;
+            padding: 0;
             font-family: "Courier New", "MS Gothic", monospace; 
-            font-size: 13px; 
-            line-height: 1.6; 
+            font-size: 16px; /* プレビュー文字を大きく（13px→16px） */
+            font-weight: bold; /* 少し太めに */
+            line-height: 1.7; 
             color: #333; 
-            white-space: pre-wrap; /* 折り返しを有効に */
+            white-space: pre-wrap;
             word-wrap: break-word;
         }
         
-        .footer { font-size: 0.7rem; text-align: center; color: #ccc; margin: 30px 0; }
+        .footer { font-size: 0.8rem; text-align: center; color: #ccc; margin: 25px 0; }
     </style>
 </head>
 <body>
@@ -106,7 +96,7 @@
         <pre id="output">ここにレポートが表示されるよ</pre>
     </div>
 
-    <div class="footer">designed for Phomemo | Open-Meteo API</div>
+    <div class="footer">designed for Phomemo | Open-Meteo</div>
 </div>
 
 <script>
@@ -153,27 +143,27 @@
             const dateStr = dObj.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', weekday: 'short' });
             const nowTime = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 
-            // コピー用テキストの整形（記号を美しく）
+            // コピー用テキストも「力強い」印象に整形
             const text = 
 `━━━━━━━━━━━━━━
- 【 天気レポート 】
+ 【 天 気 レ ポ ー ト 】
   📍 ${displayName}
 ━━━━━━━━━━━━━━
 
  ● 現在の観測 (${nowTime})
  ──────────────────
-  天気 ： ${curCondition}
-  気温 ： ${cur.current.temperature_2m} ℃
-  湿度 ： ${cur.current.relative_humidity_2m} %
-  風速 ： ${cur.current.wind_speed_10m} m/s
+  天 気 ： ${curCondition}
+  気 温 ： ${cur.current.temperature_2m} ℃
+  湿 度 ： ${cur.current.relative_humidity_2m} %
+  風 速 ： ${cur.current.wind_speed_10m} m/s
 
  ● 過去の実績 (${dateStr})
  ──────────────────
-  最高温 ： ${arc.daily.temperature_2m_max[0]} ℃
-  最低温 ： ${arc.daily.temperature_2m_min[0]} ℃
-  平均湿 ： ${Math.round(arc.daily.relative_humidity_2m_mean[0])} %
-  降水量 ： ${arc.daily.precipitation_sum[0]} mm
-  蒸発量 ： ${arc.daily.et0_fao_evapotranspiration[0]} mm
+  最 高 ： ${arc.daily.temperature_2m_max[0]} ℃
+  最 低 ： ${arc.daily.temperature_2m_min[0]} ℃
+  湿 度 ： ${Math.round(arc.daily.relative_humidity_2m_mean[0])} %
+  降 水 ： ${arc.daily.precipitation_sum[0]} mm
+  蒸 発 ： ${arc.daily.et0_fao_evapotranspiration[0]} mm
 
  ━━━━━━━━━━━━━━
    Open-Meteo Mixed Report`.trim();
