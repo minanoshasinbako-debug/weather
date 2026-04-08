@@ -12,6 +12,8 @@
         .card { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 15px; }
         .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
         label { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); margin-left: 5px; }
+        /* プレースホルダーを少し薄く */
+        input::placeholder { color: #ccc; }
         input { width: 100%; padding: 16px; font-size: 18px; border: 2px solid #f0f0f0; border-radius: 14px; box-sizing: border-box; outline: none; }
         button { width: 100%; padding: 20px; font-size: 20px; font-weight: bold; background-color: var(--primary-color); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0 #6aa7ac; margin-top: 5px; }
         button:active { transform: translateY(2px); box-shadow: 0 2px 0 #6aa7ac; }
@@ -28,7 +30,7 @@
     <div class="card">
         <div class="input-group">
             <label>📍 場所をさがす</label>
-            <input type="text" id="cityInput" placeholder="瑞浪市, 土岐市..." value="瑞浪市">
+            <input type="text" id="cityInput" placeholder="地名を入力 (例: 瑞浪)" value="">
             <label>📅 過去の日付をえらぶ</label>
             <input type="date" id="dateInput">
         </div>
@@ -36,11 +38,12 @@
         <button id="copyBtn" onclick="copyToClipboard()">レポートをコピーする 📋</button>
         <div id="status"></div>
     </div>
-    <div class="report-area"><pre id="output">ここにレポートが表示されるよ</pre></div>
+    <div class="report-area"><pre id="output">地名を入力してボタンを押してね</pre></div>
     <div class="footer">designed for Phomemo | Open-Meteo</div>
 </div>
 
 <script>
+    // 初期日付の設定（昨日）
     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
     document.getElementById('dateInput').value = yesterday.toISOString().split('T')[0];
 
@@ -50,13 +53,18 @@
     }
 
     async function fetchFullWeather() {
-        const cityQuery = document.getElementById('cityInput').value.trim();
+        const cityInput = document.getElementById('cityInput');
+        const cityQuery = cityInput.value.trim(); // 空白を自動除去
         const targetDate = document.getElementById('dateInput').value;
         const status = document.getElementById('status');
         const output = document.getElementById('output');
         const copyBtn = document.getElementById('copyBtn');
 
-        if (!cityQuery) { status.textContent = "地名をおしえてね！"; return; }
+        if (!cityQuery) { 
+            status.textContent = "地名をおしえてね！"; 
+            cityInput.focus(); // 入力欄にカーソルを合わせる
+            return; 
+        }
         status.textContent = "お取り寄せ中...";
         copyBtn.style.display = "none";
 
@@ -105,7 +113,7 @@
 
             output.textContent = text;
             status.textContent = "データを読み込んだよ ✨";
-            copyBtn.style.display = "block"; // データが出たらコピーボタンを表示
+            copyBtn.style.display = "block";
         } catch (err) {
             status.textContent = "エラーになっちゃった 💦";
             output.textContent = err;
