@@ -6,71 +6,95 @@
     <title>お天気ログ ☁️✨</title>
     <style>
         :root {
-            --primary-color: #7fbcc1; /* 優しい水色 */
-            --accent-color: #ffb7b2;  /* 可愛いピンク */
-            --bg-color: #fdfcf0;      /* 柔らかなクリーム色 */
+            --primary-color: #7fbcc1;
+            --accent-color: #ffb7b2;
+            --bg-color: #fdfcf0;
             --text-color: #5a5a5a;
+            --card-bg: #ffffff;
         }
         body { 
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; 
             display: flex; flex-direction: column; align-items: center; 
             padding: 20px; background-color: var(--bg-color); color: var(--text-color);
+            margin: 0;
         }
-        .container { width: 100%; max-width: 380px; }
+        .container { width: 100%; max-width: 400px; }
         
-        /* タイトル部分 */
-        h1 { font-size: 1.2rem; text-align: center; color: var(--primary-color); margin-bottom: 20px; }
+        h1 { font-size: 1.3rem; text-align: center; color: var(--primary-color); margin: 20px 0; letter-spacing: 2px; }
 
         .card {
-            background: white; padding: 20px; border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
+            background: var(--card-bg); padding: 25px; border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 20px;
         }
 
-        .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        
-        label { font-size: 0.8rem; font-weight: bold; color: var(--primary-color); padding-left: 5px; }
+        .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        label { font-size: 0.85rem; font-weight: bold; color: var(--primary-color); margin-left: 5px; }
         
         input { 
-            width: 100%; padding: 12px; font-size: 16px; 
-            border: 2px solid #f0f0f0; border-radius: 12px; box-sizing: border-box;
-            outline: none; transition: border-color 0.3s;
+            width: 100%; padding: 14px; font-size: 16px; 
+            border: 2px solid #f0f0f0; border-radius: 14px; box-sizing: border-box;
+            background: #fafafa; outline: none; transition: all 0.3s;
         }
-        input:focus { border-color: var(--primary-color); }
+        input:focus { border-color: var(--primary-color); background: #fff; }
 
         button { 
-            width: 100%; padding: 16px; font-size: 18px; font-weight: bold; 
+            width: 100%; padding: 18px; font-size: 18px; font-weight: bold; 
             background-color: var(--primary-color); color: white; 
             border: none; border-radius: 50px; cursor: pointer;
             box-shadow: 0 4px 0 #6aa7ac; transition: all 0.2s;
+            margin-top: 10px;
         }
         button:active { transform: translateY(2px); box-shadow: 0 2px 0 #6aa7ac; }
 
         #status { 
             color: var(--accent-color); text-align: center; font-size: 0.9rem; 
-            font-weight: bold; margin: 10px 0; min-height: 1.2em; 
+            font-weight: bold; margin: 15px 0 5px; min-height: 1.2em; 
         }
 
-        /* 出力プレビューエリア */
+        /* レポート表示エリアの改良 */
+        .report-area {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid #eee;
+            position: relative;
+            overflow: hidden;
+        }
+        .report-area::before {
+            content: "PREVIEW";
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.6rem;
+            color: #ddd;
+            font-weight: bold;
+        }
+
         pre { 
-            background: #f9f9f9; padding: 15px; border-radius: 12px;
-            border: 1px dashed #ccc; font-family: 'Courier New', monospace; 
-            font-size: 12px; line-height: 1.4; color: #444; overflow-x: auto;
+            margin: 0;
+            padding: 5px 0;
+            font-family: "Courier New", "MS Gothic", monospace; 
+            font-size: 13px; 
+            line-height: 1.6; 
+            color: #333; 
+            white-space: pre-wrap; /* 折り返しを有効に */
+            word-wrap: break-word;
         }
         
-        .footer { font-size: 0.7rem; text-align: center; color: #bbb; margin-top: 20px; }
+        .footer { font-size: 0.7rem; text-align: center; color: #ccc; margin: 30px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>☁️ Weather Log Tool ☁️</h1>
+    <h1>☁️ Weather Log ☁️</h1>
     
     <div class="card">
         <div class="input-group">
-            <label>📍 どこを調べますか？</label>
-            <input type="text" id="cityInput" placeholder="瑞浪, 土岐, 渋谷..." value="瑞浪">
+            <label>📍 場所をさがす</label>
+            <input type="text" id="cityInput" placeholder="瑞浪市, 土岐市..." value="瑞浪市">
             
-            <label>📅 いつを振り返りますか？</label>
+            <label>📅 日付をえらぶ</label>
             <input type="date" id="dateInput">
         </div>
 
@@ -78,15 +102,14 @@
         <div id="status" class="msg"></div>
     </div>
 
-    <div class="card" style="padding: 10px;">
-        <pre id="output">ここにレポートが表示されます</pre>
+    <div class="report-area">
+        <pre id="output">ここにレポートが表示されるよ</pre>
     </div>
 
-    <div class="footer">powered by Open-Meteo</div>
+    <div class="footer">designed for Phomemo | Open-Meteo API</div>
 </div>
 
 <script>
-    // 初期日付の設定（昨日）
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     document.getElementById('dateInput').value = yesterday.toISOString().split('T')[0];
@@ -120,35 +143,39 @@
             const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${targetDate}&end_date=${targetDate}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FTokyo`;
 
             const [curRes, arcRes] = await Promise.all([fetch(currentUrl), fetch(archiveUrl)]);
-            const curData = await curRes.json();
-            const arcData = await arcRes.json();
+            const cur = await curRes.json();
+            const arc = await arcRes.json();
 
             const weatherMap = {0:"快晴", 1:"晴れ", 2:"一部曇", 3:"曇り", 45:"霧", 51:"小雨", 61:"雨", 71:"雪", 95:"雷雨"};
-            const curCondition = weatherMap[curData.current.weather_code] || "不明";
+            const curCondition = weatherMap[cur.current.weather_code] || "不明";
 
             const dObj = new Date(targetDate);
             const dateStr = dObj.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', weekday: 'short' });
             const nowTime = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 
+            // コピー用テキストの整形（記号を美しく）
             const text = 
-`【 天気レポート：${displayName} 】
+`━━━━━━━━━━━━━━
+ 【 天気レポート 】
+  📍 ${displayName}
+━━━━━━━━━━━━━━
 
-■ 現在の観測 (${nowTime})
-----------------------------
-　天気　：${curCondition}
-　気温　：${curData.current.temperature_2m}℃
-　湿度　：${curData.current.relative_humidity_2m}%
-　風速　：${curData.current.wind_speed_10m}m/s
+ ● 現在の観測 (${nowTime})
+ ──────────────────
+  天気 ： ${curCondition}
+  気温 ： ${cur.current.temperature_2m} ℃
+  湿度 ： ${cur.current.relative_humidity_2m} %
+  風速 ： ${cur.current.wind_speed_10m} m/s
 
-■ 過去の実績 (${dateStr})
-----------------------------
-　最高温：${arcData.daily.temperature_2m_max[0]}℃
-　最低温：${arcData.daily.temperature_2m_min[0]}℃
-　平均湿：${Math.round(arcData.daily.relative_humidity_2m_mean[0])}%
-　降水量：${arcData.daily.precipitation_sum[0]}mm
-　蒸発量：${arcData.daily.et0_fao_evapotranspiration[0]}mm
+ ● 過去の実績 (${dateStr})
+ ──────────────────
+  最高温 ： ${arc.daily.temperature_2m_max[0]} ℃
+  最低温 ： ${arc.daily.temperature_2m_min[0]} ℃
+  平均湿 ： ${Math.round(arc.daily.relative_humidity_2m_mean[0])} %
+  降水量 ： ${arc.daily.precipitation_sum[0]} mm
+  蒸発量 ： ${arc.daily.et0_fao_evapotranspiration[0]} mm
 
-----------------------------
+ ━━━━━━━━━━━━━━
    Open-Meteo Mixed Report`.trim();
 
             output.textContent = text;
