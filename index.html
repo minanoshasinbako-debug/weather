@@ -31,7 +31,7 @@
         label { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); margin-left: 5px; }
         
         input { 
-            width: 100%; padding: 16px; font-size: 18px; /* 入力文字も大きく */
+            width: 100%; padding: 16px; font-size: 18px; 
             border: 2px solid #f0f0f0; border-radius: 14px; box-sizing: border-box;
             background: #fafafa; outline: none;
         }
@@ -50,12 +50,11 @@
             font-weight: bold; margin: 12px 0; min-height: 1.2em; 
         }
 
-        /* レポート表示エリア：文字を大きく、視認性アップ */
         .report-area {
             background: #fff;
             padding: 20px;
             border-radius: 16px;
-            border: 3px solid var(--primary-color); /* 枠を少し太く */
+            border: 3px solid var(--primary-color);
             position: relative;
         }
 
@@ -63,8 +62,8 @@
             margin: 0;
             padding: 0;
             font-family: "Courier New", "MS Gothic", monospace; 
-            font-size: 16px; /* プレビュー文字を大きく（13px→16px） */
-            font-weight: bold; /* 少し太めに */
+            font-size: 16px; 
+            font-weight: bold;
             line-height: 1.7; 
             color: #333; 
             white-space: pre-wrap;
@@ -84,7 +83,7 @@
             <label>📍 場所をさがす</label>
             <input type="text" id="cityInput" placeholder="瑞浪市, 土岐市..." value="瑞浪市">
             
-            <label>📅 日付をえらぶ</label>
+            <label>📅 過去の日付をえらぶ</label>
             <input type="date" id="dateInput">
         </div>
 
@@ -139,25 +138,30 @@
             const weatherMap = {0:"快晴", 1:"晴れ", 2:"一部曇", 3:"曇り", 45:"霧", 51:"小雨", 61:"雨", 71:"雪", 95:"雷雨"};
             const curCondition = weatherMap[cur.current.weather_code] || "不明";
 
-            const dObj = new Date(targetDate);
-            const dateStr = dObj.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', weekday: 'short' });
-            const nowTime = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            // 日付・時間の整形
+            const now = new Date();
+            const todayStr = now.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+            const nowTime = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 
-            // コピー用テキストも「力強い」印象に整形
+            const dObj = new Date(targetDate);
+            const pastDateStr = dObj.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+
             const text = 
 `━━━━━━━━━━━━━━
  【 天 気 レ ポ ー ト 】
   📍 ${displayName}
 ━━━━━━━━━━━━━━
 
- ● 現在の観測 (${nowTime})
+ ● 現在の観測
+   ${todayStr} ${nowTime}
  ──────────────────
   天 気 ： ${curCondition}
   気 温 ： ${cur.current.temperature_2m} ℃
   湿 度 ： ${cur.current.relative_humidity_2m} %
   風 速 ： ${cur.current.wind_speed_10m} m/s
 
- ● 過去の実績 (${dateStr})
+ ● 過去の実績
+   ${pastDateStr}
  ──────────────────
   最 高 ： ${arc.daily.temperature_2m_max[0]} ℃
   最 低 ： ${arc.daily.temperature_2m_min[0]} ℃
