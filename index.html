@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全国お天気履歴検索</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f4f4f9; }
+        .container { width: 100%; max-width: 400px; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        label { font-size: 12px; color: #666; margin-bottom: -5px; margin-left: 5px; }
+        button { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; background-color: #2c3e50; color: white; border: none; border-radius: 10px; cursor: pointer; margin-top: 5px; }
+        button:active { background-color: #1a252f; }
+        pre { background: #fff; padding: 15px; border: 2px solid #ddd; font-family: 'Courier New', 'MS Gothic', monospace; font-size: 14px; line-height: 1.4; white-space: pre; overflow-x: auto; }
+        .msg { color: #e67e22; text-align: center; height: 20px; margin-bottom: 10px; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="input-group">
+        <label>地名を入力 (例: 瑞浪市, 札幌, shibuya)</label>
+        <input type="text" id="cityInput" placeholder="場所を検索..." value="瑞浪市">
+
+        <label>取得したい日付</label>
+        <input type="date" id="dateInput">
+    </div>
+
+    <button onclick="searchAndFetch()">検索して履歴を取得</button>
+    <div id="status" class="msg"></div>
+    <pre id="output">地名と日付を入れてください</pre>
+</div>
+
+<script>
+    // 初期値として「昨日」の日付をセット
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    document.getElementById('dateInput').value = yesterday.toISOString().split('T')[0];
+
+    async function searchAndFetch() {
+        const city = document.getElementById('cityInput').value.trim();
+        const date = document.getElementById('dateInput').value;
+        const status = document.getElementById('status');
+        const output = document.getElementById('output');
+
+        if (!city || !date) {
+            status.textContent = "地名と日付を入力してください";
+            return;
+        }
+
+        status.textContent = "場所を検索中...";
+
+        try {
+            // 1. 地名から緯度経度を検索 (Geocoding API)
+            const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ja&format=json`;
+            const geoRes = await fetch(geoUrl);
+            const geoData = await geoRes.json();
+
+            if (!geoData.results || geoData.results.length === 0) {
+                status.textContent = "場所が見つかりませんでした";
+                return;
+            }
+
+            const { latitude, longitude, name, admin1 } = geoData.results[0];
+            const areaName = `${admin1 || ""} ${name}`; // 県名＋都市名
+
+            status.textContent = "気象データを取得中...";
+
+            // 2. 緯度経度を使って履歴データを取得
+            const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FTokyo`;
+            const archiveRes = await fetch(archiveUrl);
+            const archiveData = await archiveRes.json();
+
+            // 日付の整形
+            const d = new Date(date);
+            const dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+
+            // レイアウト作成
+            const text = 
+`【 天気記録：${areaName} 】
+  ${dateStr}
+
+■ その日の実績
+----------------------------
+　最高温：${archiveData.daily.temperature_2m_max[0]}℃
+　最低温：${archiveData.daily.temperature_2m_min[0]}℃
+　降水量：${archiveData.daily.precipitation_sum[0]}mm
+　蒸発量：${archiveData.daily.et0_fao_evapotranspiration[0]}mm
+
+----------------------------
+   Open-Meteo Global Archive`.trim();
+
+            output.textContent = text;
+            await navigator.clipboard.writeText(text);
+            status.textContent = "✓ コピーしました！";
+
+        } catch (err) {
+            status.textContent = "エラーが発生しました";
+            output.textContent = err;
+        }
+    }
+</script>
+</body>
+</html>
