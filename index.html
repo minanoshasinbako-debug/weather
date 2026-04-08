@@ -19,57 +19,16 @@
             margin: 0;
         }
         .container { width: 100%; max-width: 420px; }
-        
         h1 { font-size: 1.4rem; text-align: center; color: var(--primary-color); margin: 15px 0; letter-spacing: 2px; }
-
-        .card {
-            background: var(--card-bg); padding: 20px; border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 15px;
-        }
-
+        .card { background: var(--card-bg); padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 15px; }
         .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
         label { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); margin-left: 5px; }
-        
-        input { 
-            width: 100%; padding: 16px; font-size: 18px; 
-            border: 2px solid #f0f0f0; border-radius: 14px; box-sizing: border-box;
-            background: #fafafa; outline: none;
-        }
-
-        button { 
-            width: 100%; padding: 20px; font-size: 20px; font-weight: bold; 
-            background-color: var(--primary-color); color: white; 
-            border: none; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 5px 0 #6aa7ac; transition: all 0.2s;
-            margin-top: 5px;
-        }
+        input { width: 100%; padding: 16px; font-size: 18px; border: 2px solid #f0f0f0; border-radius: 14px; box-sizing: border-box; background: #fafafa; outline: none; }
+        button { width: 100%; padding: 20px; font-size: 20px; font-weight: bold; background-color: var(--primary-color); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0 #6aa7ac; transition: all 0.2s; margin-top: 5px; }
         button:active { transform: translateY(2px); box-shadow: 0 2px 0 #6aa7ac; }
-
-        #status { 
-            color: var(--accent-color); text-align: center; font-size: 1rem; 
-            font-weight: bold; margin: 12px 0; min-height: 1.2em; 
-        }
-
-        .report-area {
-            background: #fff;
-            padding: 20px;
-            border-radius: 16px;
-            border: 3px solid var(--primary-color);
-            position: relative;
-        }
-
-        pre { 
-            margin: 0;
-            padding: 0;
-            font-family: "Courier New", "MS Gothic", monospace; 
-            font-size: 16px; 
-            font-weight: bold;
-            line-height: 1.7; 
-            color: #333; 
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        
+        #status { color: var(--accent-color); text-align: center; font-size: 1rem; font-weight: bold; margin: 12px 0; min-height: 1.2em; }
+        .report-area { background: #fff; padding: 20px; border-radius: 16px; border: 3px solid var(--primary-color); position: relative; }
+        pre { margin: 0; padding: 0; font-family: "Courier New", "MS Gothic", monospace; font-size: 16px; font-weight: bold; line-height: 1.7; color: #333; white-space: pre-wrap; word-wrap: break-word; }
         .footer { font-size: 0.8rem; text-align: center; color: #ccc; margin: 25px 0; }
     </style>
 </head>
@@ -77,24 +36,19 @@
 
 <div class="container">
     <h1>☁️ Weather Log ☁️</h1>
-    
     <div class="card">
         <div class="input-group">
             <label>📍 場所をさがす</label>
             <input type="text" id="cityInput" placeholder="瑞浪市, 土岐市..." value="瑞浪市">
-            
             <label>📅 過去の日付をえらぶ</label>
             <input type="date" id="dateInput">
         </div>
-
         <button onclick="fetchFullWeather()">データをあつめる ✨</button>
         <div id="status" class="msg"></div>
     </div>
-
     <div class="report-area">
         <pre id="output">ここにレポートが表示されるよ</pre>
     </div>
-
     <div class="footer">designed for Phomemo | Open-Meteo</div>
 </div>
 
@@ -102,6 +56,19 @@
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     document.getElementById('dateInput').value = yesterday.toISOString().split('T')[0];
+
+    // 天気コードを日本語に変換する関数
+    function getWeatherName(code) {
+        const weatherMap = {
+            0: "快晴 ☀️", 1: "晴れ 🌤", 2: "一部曇 ⛅", 3: "曇り ☁️",
+            45: "霧 🌫", 48: "霧 🌫", 51: "小雨 💧", 53: "小雨 💧", 55: "小雨 💧",
+            61: "雨 ☔", 63: "雨 ☔", 65: "強い雨 ⛈",
+            71: "雪 ❄️", 73: "雪 ❄️", 75: "大雪 ⛄",
+            80: "にわか雨 🌦", 81: "にわか雨 🌦", 82: "激しい雨 🌪",
+            95: "雷雨 ⚡", 96: "雷雨 ⚡", 99: "雷雨 ⚡"
+        };
+        return weatherMap[code] || "不明";
+    }
 
     async function fetchFullWeather() {
         const cityQuery = document.getElementById('cityInput').value.trim();
@@ -116,11 +83,7 @@
             const geoUrl = `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(cityQuery)}`;
             const geoRes = await fetch(geoUrl);
             const geoData = await geoRes.json();
-
-            if (geoData.length === 0) {
-                status.textContent = "場所が見つからなかったよ 💦";
-                return;
-            }
+            if (geoData.length === 0) { status.textContent = "場所が見つからなかったよ 💦"; return; }
 
             const lon = geoData[0].geometry.coordinates[0];
             const lat = geoData[0].geometry.coordinates[1];
@@ -128,21 +91,18 @@
 
             status.textContent = "データをお取り寄せ中...";
 
+            // APIリクエストに weather_code を追加
             const currentUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FTokyo`;
-            const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${targetDate}&end_date=${targetDate}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FTokyo`;
+            const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${targetDate}&end_date=${targetDate}&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FTokyo`;
 
             const [curRes, arcRes] = await Promise.all([fetch(currentUrl), fetch(archiveUrl)]);
             const cur = await curRes.json();
             const arc = await arcRes.json();
 
-            const weatherMap = {0:"快晴", 1:"晴れ", 2:"一部曇", 3:"曇り", 45:"霧", 51:"小雨", 61:"雨", 71:"雪", 95:"雷雨"};
-            const curCondition = weatherMap[cur.current.weather_code] || "不明";
-
-            // 日付・時間の整形
+            // 今日の日付と指定日の日付を整形
             const now = new Date();
             const todayStr = now.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
             const nowTime = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-
             const dObj = new Date(targetDate);
             const pastDateStr = dObj.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
 
@@ -155,7 +115,7 @@
  ● 現在の観測
    ${todayStr} ${nowTime}
  ──────────────────
-  天 気 ： ${curCondition}
+  天 気 ： ${getWeatherName(cur.current.weather_code)}
   気 温 ： ${cur.current.temperature_2m} ℃
   湿 度 ： ${cur.current.relative_humidity_2m} %
   風 速 ： ${cur.current.wind_speed_10m} m/s
@@ -163,6 +123,7 @@
  ● 過去の実績
    ${pastDateStr}
  ──────────────────
+  天 気 ： ${getWeatherName(arc.daily.weather_code[0])}
   最 高 ： ${arc.daily.temperature_2m_max[0]} ℃
   最 低 ： ${arc.daily.temperature_2m_min[0]} ℃
   湿 度 ： ${Math.round(arc.daily.relative_humidity_2m_mean[0])} %
