@@ -12,8 +12,6 @@
         .card { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom: 15px; }
         .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
         label { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); margin-left: 5px; }
-        /* プレースホルダーを少し薄く */
-        input::placeholder { color: #ccc; }
         input { width: 100%; padding: 16px; font-size: 18px; border: 2px solid #f0f0f0; border-radius: 14px; box-sizing: border-box; outline: none; }
         button { width: 100%; padding: 20px; font-size: 20px; font-weight: bold; background-color: var(--primary-color); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 0 #6aa7ac; margin-top: 5px; }
         button:active { transform: translateY(2px); box-shadow: 0 2px 0 #6aa7ac; }
@@ -30,22 +28,21 @@
     <div class="card">
         <div class="input-group">
             <label>📍 場所をさがす</label>
-            <input type="text" id="cityInput" placeholder="地名を入力 (例: 瑞浪)" value="">
-            <label>📅 過去の日付をえらぶ</label>
+            <input type="text" id="cityInput" placeholder="地名を入力 (例: 土岐)" value="">
+            <label>📅 調べたい日付 (過去〜予報)</label>
             <input type="date" id="dateInput">
         </div>
         <button onclick="fetchFullWeather()">データをあつめる ✨</button>
         <button id="copyBtn" onclick="copyToClipboard()">レポートをコピーする 📋</button>
         <div id="status"></div>
     </div>
-    <div class="report-area"><pre id="output">地名を入力してボタンを押してね</pre></div>
+    <div class="report-area"><pre id="output">地名と日付を選んでね</pre></div>
     <div class="footer">designed for Phomemo | Open-Meteo</div>
 </div>
 
 <script>
-    // 初期日付の設定（昨日）
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    document.getElementById('dateInput').value = yesterday.toISOString().split('T')[0];
+    // 初期値は今日に設定
+    document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
 
     function getWeatherName(code) {
         const weatherMap = {0: "快晴 ☀️", 1: "晴れ 🌤", 2: "一部曇 ⛅", 3: "曇り ☁️", 45: "霧 🌫", 51: "小雨 💧", 61: "雨 ☔", 71: "雪 ❄️", 80: "にわか雨 🌦", 95: "雷雨 ⚡"};
@@ -53,39 +50,44 @@
     }
 
     async function fetchFullWeather() {
-        const cityInput = document.getElementById('cityInput');
-        const cityQuery = cityInput.value.trim(); // 空白を自動除去
+        const cityQuery = document.getElementById('cityInput').value.trim();
         const targetDate = document.getElementById('dateInput').value;
         const status = document.getElementById('status');
         const output = document.getElementById('output');
         const copyBtn = document.getElementById('copyBtn');
 
-        if (!cityQuery) { 
-            status.textContent = "地名をおしえてね！"; 
-            cityInput.focus(); // 入力欄にカーソルを合わせる
-            return; 
-        }
-        status.textContent = "お取り寄せ中...";
+        if (!cityQuery) { status.textContent = "地名をおしえてね！"; return; }
+        status.textContent = "データを探しています...";
         copyBtn.style.display = "none";
 
         try {
             const geoRes = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(cityQuery)}`);
             const geoData = await geoRes.json();
-            if (geoData.length === 0) { status.textContent = "場所が見つからなかったよ 💦"; return; }
+            if (geoData.length === 0) { status.textContent = "場所が見つかりませんでした 💦"; return; }
 
             const [lon, lat] = geoData[0].geometry.coordinates;
             const displayName = geoData[0].properties.title;
 
-            const [curRes, arcRes] = await Promise.all([
+            const today = new Date().toISOString().split('T')[0];
+            const isFuture = targetDate > today;
+
+            // APIの切り替え（予報か過去か）
+            const baseUrl = isFuture ? "https://api.open-meteo.com/v1/forecast" : "https://archive-api.open-meteo.com/v1/archive";
+            const dateParams = isFuture 
+                ? `start_date=${targetDate}&end_date=${targetDate}` 
+                : `start_date=${targetDate}&end_date=${targetDate}`;
+
+            const [curRes, targetRes] = await Promise.all([
                 fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FTokyo`),
-                fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${targetDate}&end_date=${targetDate}&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FTokyo`)
+                fetch(`${baseUrl}?latitude=${lat}&longitude=${lon}&${dateParams}&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FTokyo`)
             ]);
+
             const cur = await curRes.json();
-            const arc = await arcRes.json();
+            const tar = await targetRes.json();
 
             const now = new Date();
             const todayStr = now.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
-            const pastDateStr = new Date(targetDate).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+            const targetStr = new Date(targetDate).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
 
             const text = 
 `━━━━━━━━━━━━━━
@@ -100,22 +102,22 @@
   湿 度 ： ${cur.current.relative_humidity_2m} %
   風 速 ： ${cur.current.wind_speed_10m} m/s
 
- ● 過去の実績
-   ${pastDateStr}
+ ● ${isFuture ? '予報データ' : '過去の実績'}
+   ${targetStr}
  ──────────────────
-  天 気 ： ${getWeatherName(arc.daily.weather_code[0])}
-  最 高 ： ${arc.daily.temperature_2m_max[0]} ℃
-  最 低 ： ${arc.daily.temperature_2m_min[0]} ℃
-  湿 度 ： ${Math.round(arc.daily.relative_humidity_2m_mean[0])} %
-  降 水 ： ${arc.daily.precipitation_sum[0]} mm
-  蒸 発 ： ${arc.daily.et0_fao_evapotranspiration[0]} mm
+  天 気 ： ${getWeatherName(tar.daily.weather_code[0])}
+  最 高 ： ${tar.daily.temperature_2m_max[0]} ℃
+  最 低 ： ${tar.daily.temperature_2m_min[0]} ℃
+  湿 度 ： ${Math.round(tar.daily.relative_humidity_2m_mean[0])} %
+  降 水 ： ${tar.daily.precipitation_sum[0]} mm
+  蒸 発 ： ${tar.daily.et0_fao_evapotranspiration[0]} mm
  ━━━━━━━━━━━━━━`.trim();
 
             output.textContent = text;
-            status.textContent = "データを読み込んだよ ✨";
+            status.textContent = isFuture ? "予報を取得しました 🔮" : "過去データを取得しました ✨";
             copyBtn.style.display = "block";
         } catch (err) {
-            status.textContent = "エラーになっちゃった 💦";
+            status.textContent = "エラーが発生しました 💦";
             output.textContent = err;
         }
     }
@@ -124,9 +126,7 @@
         try {
             await navigator.clipboard.writeText(document.getElementById('output').textContent);
             document.getElementById('status').textContent = "✓ コピーしたよ！";
-        } catch (err) {
-            alert("コピーに失敗しました。表示されている文字を長押ししてコピーしてください！");
-        }
+        } catch (err) { alert("コピーに失敗しました。"); }
     }
 </script>
 </body>
