@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全国お天気・過去と今</title>
+    <title>お天気：過去と現在の比較</title>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f4f4f9; }
         .container { width: 100%; max-width: 400px; }
@@ -31,6 +31,7 @@
 </div>
 
 <script>
+    // 初期日付の設定（昨日）
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     document.getElementById('dateInput').value = yesterday.toISOString().split('T')[0];
@@ -45,7 +46,7 @@
         status.textContent = "場所を特定中...";
 
         try {
-            // 1. 地名検索
+            // 1. 地名検索 (日本国内特化)
             const geoUrl = `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(cityQuery)}`;
             const geoRes = await fetch(geoUrl);
             const geoData = await geoRes.json();
@@ -59,52 +60,53 @@
             const lat = geoData[0].geometry.coordinates[1];
             const displayName = geoData[0].properties.title;
 
-            status.textContent = "データ取得中...";
+            status.textContent = "現在と過去のデータを取得中...";
 
-            // 2. 現在(Forecast)と過去(Archive)を同時に取得
+            // 2. 現在の天気(Forecast)と過去(Archive)のAPIを並列で叩く
             const currentUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FTokyo`;
             const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${targetDate}&end_date=${targetDate}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FTokyo`;
 
             const [curRes, arcRes] = await Promise.all([fetch(currentUrl), fetch(archiveUrl)]);
-            const cur = await curRes.json();
-            const arc = await arcRes.json();
+            const curData = await curRes.json();
+            const arcData = await arcRes.json();
 
-            // 天気コード変換
+            // 天気コードを日本語に
             const weatherMap = {0:"快晴", 1:"晴れ", 2:"一部曇", 3:"曇り", 45:"霧", 51:"小雨", 61:"雨", 71:"雪", 95:"雷雨"};
-            const curCondition = weatherMap[cur.current.weather_code] || "不明";
+            const curCondition = weatherMap[curData.current.weather_code] || "不明";
 
-            // 日付整形
+            // 日付・時間の整形
             const dObj = new Date(targetDate);
             const dateStr = dObj.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', weekday: 'short' });
             const nowTime = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 
+            // テキストの組み立て（現在と過去を合体）
             const text = 
 `【 天気レポート：${displayName} 】
 
 ■ 現在の観測 (${nowTime})
 ----------------------------
 　天気　：${curCondition}
-　気温　：${cur.current.temperature_2m}℃
-　湿度　：${cur.current.relative_humidity_2m}%
-　風速　：${cur.current.wind_speed_10m}m/s
+　気温　：${curData.current.temperature_2m}℃
+　湿度　：${curData.current.relative_humidity_2m}%
+　風速　：${curData.current.wind_speed_10m}m/s
 
 ■ 過去の実績 (${dateStr})
 ----------------------------
-　最高温：${arc.daily.temperature_2m_max[0]}℃
-　最低温：${arc.daily.temperature_2m_min[0]}℃
-　平均湿：${Math.round(arc.daily.relative_humidity_2m_mean[0])}%
-　降水量：${arc.daily.precipitation_sum[0]}mm
-　蒸発量：${arc.daily.et0_fao_evapotranspiration[0]}mm
+　最高温：${arcData.daily.temperature_2m_max[0]}℃
+　最低温：${arcData.daily.temperature_2m_min[0]}℃
+　平均湿：${Math.round(arcData.daily.relative_humidity_2m_mean[0])}%
+　降水量：${arcData.daily.precipitation_sum[0]}mm
+　蒸発量：${arcData.daily.et0_fao_evapotranspiration[0]}mm
 
 ----------------------------
    Open-Meteo Mixed Report`.trim();
 
             output.textContent = text;
             await navigator.clipboard.writeText(text);
-            status.textContent = "✓ 全データをコピーしました！";
+            status.textContent = "✓ すべてコピーしました！";
 
         } catch (err) {
-            status.textContent = "エラーが発生しました";
+            status.textContent = "取得エラーが発生しました";
             output.textContent = err;
         }
     }
